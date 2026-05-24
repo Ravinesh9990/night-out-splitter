@@ -122,7 +122,7 @@ function App() {
     let y = 10
 
     doc.setFontSize(16)
-    doc.text("Night Out Bill Splitter", 10, y)
+    doc.text("✨ Night Out Bill Splitter ✨", 10, y)
     y += 10
 
     doc.setFontSize(12)
@@ -150,7 +150,7 @@ function App() {
 
   return (
     <div className="container">
-      <h1>Night Out Bill Splitter</h1>
+      <h1>✨ Night Out Bill Splitter ✨</h1>
 
       <div className="card">
         <h2>Add Friends</h2>
@@ -223,7 +223,7 @@ function App() {
             </label>
           ))}
         </div>
-
+        <div>&nbsp;</div>
         <button onClick={addTransaction}>Add Transaction</button>
       </div>
 

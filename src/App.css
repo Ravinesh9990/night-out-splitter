@@ -3,7 +3,7 @@ body {
   font-family: Arial, sans-serif;
 
   /* BACKGROUND IMAGE */
-  background-image: url('/background.jpg');
+  background-image: url('/background2.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -28,13 +28,17 @@ body::before {
 }
 
 /* TITLES */
-h1, h2, h3, p, span, label, strong {
-  color: #111827;
+h1 {
+  color: #ff00f7;
+}
+
+h2, h3, p, span, label, strong {
+  color: #000000;
 }
 
 /* CARD (glass effect) */
 .card {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(233, 216, 252, 0.92);
   padding: 18px;
   border-radius: 14px;
   margin-bottom: 16px;
