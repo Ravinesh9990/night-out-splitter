@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import jsPDF from 'jspdf'
+import { Analytics } from "@vercel/analytics/react"
 import './App.css'
 
 function App() {
@@ -15,11 +16,7 @@ function App() {
 
   const addPerson = () => {
     if (!personName.trim()) return
-
-    if (people.includes(personName.trim())) {
-      alert('Person already added')
-      return
-    }
+    if (people.includes(personName.trim())) return
 
     setPeople([...people, personName.trim()])
     setPersonName('')
@@ -67,6 +64,7 @@ function App() {
     setTransactions(transactions.filter((t) => t.id !== id))
   }
 
+  // 🔥 SETTLEMENT LOGIC
   const calculateSettlement = () => {
     const balances = {}
 
@@ -91,7 +89,8 @@ function App() {
     })
 
     const settlements = []
-    let i = 0, j = 0
+    let i = 0
+    let j = 0
 
     while (i < debtors.length && j < creditors.length) {
       const d = debtors[i]
@@ -117,30 +116,73 @@ function App() {
 
   const result = calculateSettlement()
 
+  // 📄 PDF EXPORT
   const exportPDF = () => {
     const doc = new jsPDF()
     let y = 10
 
     doc.setFontSize(16)
     doc.text("✨ Night Out Bill Splitter ✨", 10, y)
+    y += 12
+
+    // =========================
+    // FINAL SPENDING (CORRECT)
+    // =========================
+    const finalSpend = {}
+
+    people.forEach((p) => {
+      finalSpend[p] = 0
+    })
+
+    transactions.forEach((t) => {
+      const split = t.amount / t.sharedWith.length
+
+      // each person’s true consumption
+      t.sharedWith.forEach((p) => {
+        finalSpend[p] += split
+      })
+    })
+
+    doc.setFontSize(13)
+    doc.text("Actual Spending Per Person (True Consumption)", 10, y)
     y += 10
 
-    doc.setFontSize(12)
-    doc.text("Transactions:", 10, y)
+    Object.entries(finalSpend).forEach(([person, amount]) => {
+      doc.text(
+        `${person}: RM ${amount.toFixed(2)} spent`,
+        10,
+        y
+      )
+      y += 8
+    })
+
+    y += 6
+
+    // =========================
+    // TRANSACTIONS
+    // =========================
+    doc.setFontSize(13)
+    doc.text("Transactions", 10, y)
     y += 8
 
     transactions.forEach((t) => {
-      const line = `${t.description || "No desc"} | RM ${t.amount.toFixed(2)} | ${t.payer}`
+      const line =
+        `${t.description || "No desc"} | RM ${t.amount.toFixed(2)} | ${t.payer}`
       doc.text(line, 10, y)
       y += 8
     })
 
     y += 6
-    doc.text("Settlements:", 10, y)
+
+    // =========================
+    // SETTLEMENTS
+    // =========================
+    doc.text("Settlements", 10, y)
     y += 8
 
     result.settlements.forEach((s) => {
-      const line = `${s.from} -> ${s.to} : RM ${s.amount.toFixed(2)}`
+      const line =
+        `${s.from} -> ${s.to} : RM ${s.amount.toFixed(2)}`
       doc.text(line, 10, y)
       y += 8
     })
@@ -149,127 +191,134 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <h1>✨ Night Out Bill Splitter ✨</h1>
+    <>
+      <div className="container">
+        <h1>✨ Night Out Bill Splitter ✨</h1>
 
-      <div className="card">
-        <h2>Add Friends</h2>
+        <div className="card">
+          <h2>Add Friends</h2>
 
-        <div className="row">
-          <input
-            value={personName}
-            placeholder="Enter friend name"
-            onChange={(e) => setPersonName(e.target.value)}
-          />
-          <button onClick={addPerson}>Add</button>
-        </div>
-
-        <div className="people-list">
-          {people.map((p, i) => (
-            <span key={i} className="tag">{p}</span>
-          ))}
-        </div>
-      </div>
-
-      <div className="card">
-        <h2>Add Spending</h2>
-
-        <div className="row">
-
-                  <select value={payer} onChange={(e) => setPayer(e.target.value)}>
-          <option value="">Who Paid?</option>
-          {people.map((p, i) => (
-            <option key={i} value={p}>{p}</option>
-          ))}
-        </select>
-        
-          <input
-            placeholder="Description"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-
-          <input
-            className="amount-input"
-            type="number"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-
-        <h3>Share With</h3>
-
-        <div className="select-all">
-          <label>
+          <div className="row">
             <input
-              type="checkbox"
-              checked={allSelected}
-              onChange={toggleSelectAll}
+              value={personName}
+              placeholder="Enter friend name"
+              onChange={(e) => setPersonName(e.target.value)}
             />
-            Select All
-          </label>
+            <button onClick={addPerson}>Add</button>
+          </div>
+
+          <div className="people-list">
+            {people.map((p, i) => (
+              <span key={i} className="tag">{p}</span>
+            ))}
+          </div>
         </div>
 
-        <div className="checkbox-list">
-          {people.map((p, i) => (
-            <label key={i} className="checkbox-item">
+        <div className="card">
+          <h2>Add Spending</h2>
+
+          <div className="row">
+            <select value={payer} onChange={(e) => setPayer(e.target.value)}>
+              <option value="">Who Paid?</option>
+              {people.map((p, i) => (
+                <option key={i} value={p}>{p}</option>
+              ))}
+            </select>
+
+            <input
+              placeholder="Description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+
+            <input
+              type="number"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+
+          <h3>Share With</h3>
+
+          <div className="select-all">
+            <label>
               <input
                 type="checkbox"
-                checked={sharedWith.includes(p)}
-                onChange={() => toggleSharedPerson(p)}
+                checked={allSelected}
+                onChange={toggleSelectAll}
               />
-              {p}
+              Select All
             </label>
-          ))}
+          </div>
+
+          <div className="checkbox-list">
+            {people.map((p, i) => (
+              <label key={i} className="checkbox-item">
+                <input
+                  type="checkbox"
+                  checked={sharedWith.includes(p)}
+                  onChange={() => toggleSharedPerson(p)}
+                />
+                {p}
+              </label>
+            ))}
+          </div>
+
+          <button onClick={addTransaction}>
+            Add Transaction
+          </button>
         </div>
-        <div>&nbsp;</div>
-        <button onClick={addTransaction}>Add Transaction</button>
-      </div>
 
-      <div className="card">
-        <h2>Transaction History</h2>
+        <div className="card">
+          <h2>Transaction History</h2>
 
-        {transactions.length === 0 ? (
-          <p>No transactions yet</p>
-        ) : (
-          transactions.map((t) => (
-            <div key={t.id} className="transaction-card">
-              <div className="tx-top">
-                <strong>{t.description || "No description"}</strong>
-                <span>RM {t.amount.toFixed(2)}</span>
+          {transactions.length === 0 ? (
+            <p>No transactions yet</p>
+          ) : (
+            transactions.map((t) => (
+              <div key={t.id} className="transaction-card">
+                <div className="tx-top">
+                  <strong>{t.description || "No description"}</strong>
+                  <span>RM {t.amount.toFixed(2)}</span>
+                </div>
+
+                <div className="tx-bottom">
+                  Paid by {t.payer} • Shared: {t.sharedWith.join(', ')}
+                </div>
+
+                <button
+                  className="delete-btn"
+                  onClick={() => deleteTransaction(t.id)}
+                >
+                  Delete
+                </button>
               </div>
+            ))
+          )}
 
-              <div className="tx-bottom">
-                Paid by {t.payer} • Shared: {t.sharedWith.join(', ')}
+          <button className="export-btn" onClick={exportPDF}>
+            Export PDF
+          </button>
+        </div>
+
+        <div className="card">
+          <h2>Final Settlement</h2>
+
+          {result.settlements.length === 0 ? (
+            <p>No settlement needed</p>
+          ) : (
+            result.settlements.map((s, i) => (
+              <div key={i} className="settlement">
+                <b>{s.from}</b> → <b>{s.to}</b> RM {s.amount.toFixed(2)}
               </div>
-
-              <button className="delete-btn" onClick={() => deleteTransaction(t.id)}>
-                Delete
-              </button>
-            </div>
-          ))
-        )}
-
-        <button className="export-btn" onClick={exportPDF}>
-          Export PDF
-        </button>
+            ))
+          )}
+        </div>
       </div>
 
-      <div className="card">
-        <h2>Final Settlement</h2>
-
-        {result.settlements.length === 0 ? (
-          <p>No settlement needed</p>
-        ) : (
-          result.settlements.map((s, i) => (
-            <div key={i} className="settlement">
-              <b>{s.from}</b> → <b>{s.to}</b> RM {s.amount.toFixed(2)}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
+      <Analytics />
+    </>
   )
 }
 
