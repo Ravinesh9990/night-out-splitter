@@ -268,6 +268,7 @@ function App() {
           <button onClick={addTransaction}>
             Add Transaction
           </button>
+          <div>&nbsp;</div>
         </div>
 
         <div className="card">
