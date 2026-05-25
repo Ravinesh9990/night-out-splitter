@@ -264,11 +264,10 @@ function App() {
               </label>
             ))}
           </div>
-
+          <div>&nbsp;</div>
           <button onClick={addTransaction}>
             Add Transaction
           </button>
-          <div>&nbsp;</div>
         </div>
 
         <div className="card">
