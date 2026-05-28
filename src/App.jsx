@@ -116,6 +116,12 @@ function App() {
 
   const result = calculateSettlement()
 
+  // TOTAL TRANSACTION VALUE
+  const totalTransactionValue = transactions.reduce(
+    (sum, t) => sum + t.amount,
+    0
+  )
+
   // 📄 PDF EXPORT
   const exportPDF = () => {
     const doc = new jsPDF()
@@ -125,8 +131,17 @@ function App() {
     doc.text("✨ Night Out Bill Splitter ✨", 10, y)
     y += 12
 
+    // TOTAL TRANSACTION VALUE
+    doc.setFontSize(13)
+    doc.text(
+      `Total Transaction Value: RM ${totalTransactionValue.toFixed(2)}`,
+      10,
+      y
+    )
+    y += 12
+
     // =========================
-    // FINAL SPENDING (CORRECT)
+    // FINAL SPENDING
     // =========================
     const finalSpend = {}
 
@@ -137,7 +152,6 @@ function App() {
     transactions.forEach((t) => {
       const split = t.amount / t.sharedWith.length
 
-      // each person’s true consumption
       t.sharedWith.forEach((p) => {
         finalSpend[p] += split
       })
@@ -168,6 +182,7 @@ function App() {
     transactions.forEach((t) => {
       const line =
         `${t.description || "No desc"} | RM ${t.amount.toFixed(2)} | ${t.payer}`
+
       doc.text(line, 10, y)
       y += 8
     })
@@ -183,6 +198,7 @@ function App() {
     result.settlements.forEach((s) => {
       const line =
         `${s.from} -> ${s.to} : RM ${s.amount.toFixed(2)}`
+
       doc.text(line, 10, y)
       y += 8
     })
@@ -195,6 +211,7 @@ function App() {
       <div className="container">
         <h1>✨ Night Out Bill Splitter ✨</h1>
 
+        {/* ADD FRIENDS */}
         <div className="card">
           <h2>Add Friends</h2>
 
@@ -204,24 +221,36 @@ function App() {
               placeholder="Enter friend name"
               onChange={(e) => setPersonName(e.target.value)}
             />
-            <button onClick={addPerson}>Add</button>
+
+            <button onClick={addPerson}>
+              Add
+            </button>
           </div>
 
           <div className="people-list">
             {people.map((p, i) => (
-              <span key={i} className="tag">{p}</span>
+              <span key={i} className="tag">
+                {p}
+              </span>
             ))}
           </div>
         </div>
 
+        {/* ADD SPENDING */}
         <div className="card">
           <h2>Add Spending</h2>
 
           <div className="row">
-            <select value={payer} onChange={(e) => setPayer(e.target.value)}>
+            <select
+              value={payer}
+              onChange={(e) => setPayer(e.target.value)}
+            >
               <option value="">Who Paid?</option>
+
               {people.map((p, i) => (
-                <option key={i} value={p}>{p}</option>
+                <option key={i} value={p}>
+                  {p}
+                </option>
               ))}
             </select>
 
@@ -264,12 +293,15 @@ function App() {
               </label>
             ))}
           </div>
+
           <div>&nbsp;</div>
+
           <button onClick={addTransaction}>
             Add Transaction
           </button>
         </div>
 
+        {/* TRANSACTION HISTORY */}
         <div className="card">
           <h2>Transaction History</h2>
 
@@ -280,7 +312,10 @@ function App() {
               <div key={t.id} className="transaction-card">
                 <div className="tx-top">
                   <strong>{t.description || "No description"}</strong>
-                  <span>RM {t.amount.toFixed(2)}</span>
+
+                  <span>
+                    RM {t.amount.toFixed(2)}
+                  </span>
                 </div>
 
                 <div className="tx-bottom">
@@ -297,11 +332,18 @@ function App() {
             ))
           )}
 
+          {/* TOTAL VALUE */}
+          <div className="total-transactions">
+            Total Transaction Value: RM{" "}
+            {totalTransactionValue.toFixed(2)}
+          </div>
+
           <button className="export-btn" onClick={exportPDF}>
             Export PDF
           </button>
         </div>
 
+        {/* FINAL SETTLEMENT */}
         <div className="card">
           <h2>Final Settlement</h2>
 
@@ -310,7 +352,8 @@ function App() {
           ) : (
             result.settlements.map((s, i) => (
               <div key={i} className="settlement">
-                <b>{s.from}</b> → <b>{s.to}</b> RM {s.amount.toFixed(2)}
+                <b>{s.from}</b> → <b>{s.to}</b> RM{" "}
+                {s.amount.toFixed(2)}
               </div>
             ))
           )}
